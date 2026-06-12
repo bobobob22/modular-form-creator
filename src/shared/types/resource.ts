@@ -1,17 +1,22 @@
 export type ResourceStatus = 'draft' | 'completed'
 
+export type Priority = 'low' | 'medium' | 'high'
+export type Category = 'internal' | 'external' | 'vendor'
+
+export type ModuleFormData = BasicInfo | ProjectDetails
+
 export interface BasicInfo {
   resourceName: string
   owner: string
   email: string
   description: string
-  priority: string
+  priority: Priority | ''
 }
 
 export interface ProjectDetails {
   projectName: string
   budget: string
-  category: string
+  category: Category | ''
   options: string[]
 }
 

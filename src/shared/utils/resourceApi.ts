@@ -46,3 +46,11 @@ export function applyPayloadToResource(resource: Resource, payload: ResourcePayl
     projectDetails: cloneProjectDetails(payload.projectDetails),
   }
 }
+
+export function isResourcePayloadEqual(resource: Resource, payload: ResourcePayload): boolean {
+  return (
+    resource.name === payload.name &&
+    JSON.stringify(resource.basicInfo) === JSON.stringify(payload.basicInfo) &&
+    JSON.stringify(resource.projectDetails) === JSON.stringify(payload.projectDetails)
+  )
+}

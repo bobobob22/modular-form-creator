@@ -1,19 +1,11 @@
-/** Form validation rules mirrored from backend `resource.service.ts`. */
+import { TEAM_MEMBER_OPTIONS } from '@/shared/constants/resourceFieldValues'
+import { isCategory, isPriority } from '@/shared/utils/resourceFieldGuards'
 import {
-  CATEGORY,
-  PRIORITY,
-  TEAM_MEMBER_OPTIONS,
-} from '@/shared/constants/resourceForm'
+  RESOURCE_FIELD_MAX_LENGTH,
+  RESOURCE_FIELD_PATTERN,
+} from '@/shared/constants/resourceValidationRules'
 import { LABELS } from '@/shared/constants/labels'
 import type { BasicInfo, ProjectDetails } from '@/shared/types/resource'
-
-const NAME_REGEX = /^[A-Za-z0-9 -]+$/
-const OWNER_REGEX = /^[A-Za-z ]+$/
-const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-const INTEGER_REGEX = /^\d+$/
-
-const MAX_NAME_LENGTH = 255
-const MAX_DESCRIPTION_LENGTH = 1000
 
 const TEAM_MEMBER_SET = new Set<string>(TEAM_MEMBER_OPTIONS)
 
@@ -23,10 +15,10 @@ export function validateResourceName(value: string): string | null {
   if (!trimmed) {
     return LABELS.VALIDATION.RESOURCE_NAME_REQUIRED
   }
-  if (trimmed.length > MAX_NAME_LENGTH) {
+  if (trimmed.length > RESOURCE_FIELD_MAX_LENGTH.RESOURCE_NAME) {
     return LABELS.VALIDATION.RESOURCE_NAME_MAX
   }
-  if (!NAME_REGEX.test(trimmed)) {
+  if (!RESOURCE_FIELD_PATTERN.ALPHANUMERIC_NAME.test(trimmed)) {
     return LABELS.VALIDATION.RESOURCE_NAME_FORMAT
   }
 
@@ -43,10 +35,10 @@ export function validateBasicInfo(form: BasicInfo): string | null {
   if (!owner) {
     return LABELS.VALIDATION.OWNER_REQUIRED
   }
-  if (owner.length > MAX_NAME_LENGTH) {
+  if (owner.length > RESOURCE_FIELD_MAX_LENGTH.OWNER) {
     return LABELS.VALIDATION.OWNER_MAX
   }
-  if (!OWNER_REGEX.test(owner)) {
+  if (!RESOURCE_FIELD_PATTERN.OWNER.test(owner)) {
     return LABELS.VALIDATION.OWNER_FORMAT
   }
 
@@ -54,7 +46,7 @@ export function validateBasicInfo(form: BasicInfo): string | null {
   if (!email) {
     return LABELS.VALIDATION.EMAIL_REQUIRED
   }
-  if (!EMAIL_REGEX.test(email)) {
+  if (!RESOURCE_FIELD_PATTERN.EMAIL.test(email)) {
     return LABELS.VALIDATION.EMAIL_FORMAT
   }
 
@@ -62,14 +54,14 @@ export function validateBasicInfo(form: BasicInfo): string | null {
   if (!description) {
     return LABELS.VALIDATION.DESCRIPTION_REQUIRED
   }
-  if (description.length > MAX_DESCRIPTION_LENGTH) {
+  if (description.length > RESOURCE_FIELD_MAX_LENGTH.DESCRIPTION) {
     return LABELS.VALIDATION.DESCRIPTION_MAX
   }
 
   if (!form.priority) {
     return LABELS.VALIDATION.PRIORITY_REQUIRED
   }
-  if (!Object.values(PRIORITY).includes(form.priority as typeof PRIORITY[keyof typeof PRIORITY])) {
+  if (!isPriority(form.priority)) {
     return LABELS.VALIDATION.PRIORITY_INVALID
   }
 
@@ -81,10 +73,10 @@ export function validateProjectDetails(form: ProjectDetails): string | null {
   if (!projectName) {
     return LABELS.VALIDATION.PROJECT_NAME_REQUIRED
   }
-  if (projectName.length > MAX_NAME_LENGTH) {
+  if (projectName.length > RESOURCE_FIELD_MAX_LENGTH.PROJECT_NAME) {
     return LABELS.VALIDATION.PROJECT_NAME_MAX
   }
-  if (!NAME_REGEX.test(projectName)) {
+  if (!RESOURCE_FIELD_PATTERN.ALPHANUMERIC_NAME.test(projectName)) {
     return LABELS.VALIDATION.PROJECT_NAME_FORMAT
   }
 
@@ -92,14 +84,14 @@ export function validateProjectDetails(form: ProjectDetails): string | null {
   if (!budget) {
     return LABELS.VALIDATION.BUDGET_REQUIRED
   }
-  if (!INTEGER_REGEX.test(budget)) {
+  if (!RESOURCE_FIELD_PATTERN.BUDGET.test(budget)) {
     return LABELS.VALIDATION.BUDGET_FORMAT
   }
 
   if (!form.category) {
     return LABELS.VALIDATION.CATEGORY_REQUIRED
   }
-  if (!Object.values(CATEGORY).includes(form.category as typeof CATEGORY[keyof typeof CATEGORY])) {
+  if (!isCategory(form.category)) {
     return LABELS.VALIDATION.CATEGORY_INVALID
   }
 

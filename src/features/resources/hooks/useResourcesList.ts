@@ -1,18 +1,22 @@
 import { useCallback, useEffect, useState } from 'react'
-import { createResource, deleteResource, listResources } from '@/shared/api/resources'
+import { createResource, deleteResource } from '@/shared/api/resources'
 import { LABELS } from '@/shared/constants/labels'
-import { LIST_QUERY_DEFAULTS } from '@/shared/constants/resourceDomain'
 import type { Pagination, Resource } from '@/shared/types/resource'
 import { getApiErrorMessage } from '@/shared/utils/apiError'
 import { formatResourceIdForApi } from '@/shared/utils/resourceApi'
 import { validateResourceName } from '@/shared/utils/resourceValidation'
 import { useToast } from '@/shared/hooks/useToast'
-
-const INITIAL_PAGE = 1
+import { fetchResourcesListPage } from '../utils/fetchResourcesListPage'
+import {
+  deferResourcesListPageLoad,
+  RESOURCES_LIST_INITIAL_PAGE,
+  resolveListPageChange,
+  shouldReloadCurrentPageAfterCreate,
+} from '../utils/resourcesListNavigation'
 
 export function useResourcesList() {
   const { showToast } = useToast()
-  const [page, setPage] = useState(INITIAL_PAGE)
+  const [page, setPage] = useState(RESOURCES_LIST_INITIAL_PAGE)
   const [pagination, setPagination] = useState<Pagination | null>(null)
   const [items, setItems] = useState<Resource[]>([])
   const [loading, setLoading] = useState(true)
@@ -29,25 +33,12 @@ export function useResourcesList() {
       setError(null)
 
       try {
-        let pageToLoad = targetPage
-        let response = await listResources({
-          page: pageToLoad,
-          pageSize: LIST_QUERY_DEFAULTS.PAGE_SIZE,
-          sortOrder: LIST_QUERY_DEFAULTS.SORT_ORDER,
-        })
+        const { items: loadedItems, pagination: loadedPagination } =
+          await fetchResourcesListPage(targetPage)
 
-        while (response.items.length === 0 && response.pagination.page > 1) {
-          pageToLoad = response.pagination.page - 1
-          response = await listResources({
-            page: pageToLoad,
-            pageSize: LIST_QUERY_DEFAULTS.PAGE_SIZE,
-            sortOrder: LIST_QUERY_DEFAULTS.SORT_ORDER,
-          })
-        }
-
-        setItems(response.items)
-        setPagination(response.pagination)
-        setPage(response.pagination.page)
+        setItems(loadedItems)
+        setPagination(loadedPagination)
+        setPage(loadedPagination.page)
       } catch (err) {
         const message = getApiErrorMessage(err, LABELS.ERRORS.LOAD_RESOURCES)
         setError(message)
@@ -60,19 +51,13 @@ export function useResourcesList() {
   )
 
   useEffect(() => {
-    queueMicrotask(() => {
-      void loadResourcesPage(page)
-    })
+    deferResourcesListPageLoad(page, loadResourcesPage)
   }, [page, loadResourcesPage])
 
   const goToPage = (nextPage: number) => {
-    if (!pagination) {
-      setPage(nextPage)
-      return
-    }
-
-    if (nextPage >= 1 && nextPage <= pagination.totalPages) {
-      setPage(nextPage)
+    const resolvedPage = resolveListPageChange(nextPage, pagination)
+    if (resolvedPage !== null) {
+      setPage(resolvedPage)
     }
   }
 
@@ -96,10 +81,10 @@ export function useResourcesList() {
     try {
       await createResource(trimmed)
       setNewResourceName('')
-      if (page === INITIAL_PAGE) {
-        await loadResourcesPage(INITIAL_PAGE)
+      if (shouldReloadCurrentPageAfterCreate(page)) {
+        await loadResourcesPage(RESOURCES_LIST_INITIAL_PAGE)
       } else {
-        setPage(INITIAL_PAGE)
+        setPage(RESOURCES_LIST_INITIAL_PAGE)
       }
       showToast({ variant: 'success', message: LABELS.TOAST.CREATE_SUCCESS })
     } catch (err) {

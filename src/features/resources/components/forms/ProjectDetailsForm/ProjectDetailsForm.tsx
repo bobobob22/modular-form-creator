@@ -1,8 +1,7 @@
 import { LABELS } from '@/shared/constants/labels'
-import {
-  CATEGORY_OPTIONS,
-  TEAM_MEMBER_OPTIONS,
-} from '@/shared/constants/resourceForm'
+import { TEAM_MEMBER_OPTIONS } from '@/shared/constants/resourceFieldValues'
+import { CATEGORY_OPTIONS } from '@/shared/constants/resourceFormOptions'
+import { parseCategoryFormValue } from '@/shared/utils/resourceFieldGuards'
 import { FormActions } from '@/shared/components/common/FormActions/FormActions'
 import { Button, CheckboxGroup, Input, Select } from '@/design-system'
 import { ErrorMessage } from '@/shared/styles/common.styles'
@@ -57,7 +56,9 @@ export function ProjectDetailsForm({
         label={LABELS.FORM.FIELDS.CATEGORY}
         value={form.category}
         disabled={!isAvailable}
-        onChange={(event) => onFieldChange('category', event.target.value)}
+        onChange={(event) =>
+          onFieldChange('category', parseCategoryFormValue(event.target.value))
+        }
         options={[
           { value: '', label: LABELS.FORM.SELECT_CATEGORY },
           ...CATEGORY_OPTIONS,

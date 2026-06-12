@@ -1,6 +1,6 @@
 import { updateBasicInfo } from '@/shared/api/resources'
 import { LABELS } from '@/shared/constants/labels'
-import { EMPTY_BASIC_INFO } from '@/shared/constants/resourceForm'
+import { EMPTY_BASIC_INFO } from '@/shared/constants/resourceFormDefaults'
 import type { BasicInfo, Resource } from '@/shared/types/resource'
 import { buildBasicInfoPayload } from '@/shared/utils/resourceApi'
 import { validateBasicInfo } from '@/shared/utils/resourceValidation'

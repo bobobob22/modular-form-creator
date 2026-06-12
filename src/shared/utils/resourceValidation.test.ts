@@ -72,15 +72,33 @@ describe('validateBasicInfo', () => {
     expect(
       validateBasicInfo({
         ...validBasicInfo,
-        priority: 'urgent',
+        priority: 'urgent' as BasicInfo['priority'],
       }),
     ).toBe(LABELS.VALIDATION.PRIORITY_INVALID)
+  })
+
+  it('rejects missing description', () => {
+    expect(
+      validateBasicInfo({
+        ...validBasicInfo,
+        description: '',
+      }),
+    ).toBe(LABELS.VALIDATION.DESCRIPTION_REQUIRED)
   })
 })
 
 describe('validateProjectDetails', () => {
   it('accepts valid project details', () => {
     expect(validateProjectDetails(validProjectDetails)).toBeNull()
+  })
+
+  it('rejects invalid project name format', () => {
+    expect(
+      validateProjectDetails({
+        ...validProjectDetails,
+        projectName: 'bad_name',
+      }),
+    ).toBe(LABELS.VALIDATION.PROJECT_NAME_FORMAT)
   })
 
   it('rejects non-integer budget', () => {

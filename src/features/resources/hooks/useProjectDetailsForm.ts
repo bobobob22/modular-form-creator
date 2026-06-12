@@ -1,7 +1,7 @@
 import { updateProjectDetails } from '@/shared/api/resources'
 import { LABELS } from '@/shared/constants/labels'
 import { RESOURCE_STATUS } from '@/shared/constants/resourceDomain'
-import { EMPTY_PROJECT_DETAILS } from '@/shared/constants/resourceForm'
+import { EMPTY_PROJECT_DETAILS } from '@/shared/constants/resourceFormDefaults'
 import type { ProjectDetails, Resource } from '@/shared/types/resource'
 import { isBasicInfoModuleComplete } from '@/shared/utils/moduleCompletion'
 import {

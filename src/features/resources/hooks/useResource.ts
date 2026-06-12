@@ -1,42 +1,21 @@
-import { useCallback, useEffect, useState } from 'react'
-import { ApiClientError } from '@/shared/api/client'
-import { getResource } from '@/shared/api/resources'
+import { useEffect, useState } from 'react'
 import type { Resource } from '@/shared/types/resource'
+import { runResourceLoad } from '../utils/runResourceLoad'
 
 export function useResource(resourceId: string | undefined) {
   const [resource, setResource] = useState<Resource | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  const reload = useCallback(async () => {
-    if (!resourceId) {
-      setResource(null)
-      setLoading(false)
-      setError('Resource id is missing')
-      return
-    }
+  useEffect(() => {
+    let cancelled = false
 
-    setLoading(true)
-    setError(null)
+    runResourceLoad(resourceId, () => cancelled, setResource, setLoading, setError)
 
-    try {
-      const data = await getResource(resourceId)
-      setResource(data)
-    } catch (err) {
-      const message =
-        err instanceof ApiClientError ? err.message : 'Failed to load resource'
-      setError(message)
-      setResource(null)
-    } finally {
-      setLoading(false)
+    return () => {
+      cancelled = true
     }
   }, [resourceId])
 
-  useEffect(() => {
-    queueMicrotask(() => {
-      void reload()
-    })
-  }, [reload])
-
-  return { resource, loading, error, reload, setResource }
+  return { resource, loading, error, setResource }
 }

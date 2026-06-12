@@ -1,5 +1,6 @@
 import { LABELS } from '@/shared/constants/labels'
-import { PRIORITY_OPTIONS } from '@/shared/constants/resourceForm'
+import { PRIORITY_OPTIONS } from '@/shared/constants/resourceFormOptions'
+import { parsePriorityFormValue } from '@/shared/utils/resourceFieldGuards'
 import { FormActions } from '@/shared/components/common/FormActions/FormActions'
 import { Button, Input, Select } from '@/design-system'
 import { ErrorMessage } from '@/shared/styles/common.styles'
@@ -60,7 +61,9 @@ export function BasicInfoForm({
       <Select
         label={LABELS.FORM.FIELDS.PRIORITY}
         value={form.priority}
-        onChange={(event) => onFieldChange('priority', event.target.value)}
+        onChange={(event) =>
+          onFieldChange('priority', parsePriorityFormValue(event.target.value))
+        }
         options={[
           { value: '', label: LABELS.FORM.SELECT_PRIORITY },
           ...PRIORITY_OPTIONS,

@@ -1,4 +1,4 @@
-import { EMPTY_FIELD_PLACEHOLDER } from '@/shared/constants/resourceForm'
+import { EMPTY_FIELD_PLACEHOLDER } from '@/shared/constants/display'
 import { Input } from '@/design-system'
 
 interface DetailFieldProps {

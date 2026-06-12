@@ -1,5 +1,6 @@
 import { Checkbox } from '@/design-system'
-import { EMPTY_FIELD_PLACEHOLDER, TEAM_MEMBER_OPTIONS } from '@/shared/constants/resourceForm'
+import { EMPTY_FIELD_PLACEHOLDER } from '@/shared/constants/display'
+import { TEAM_MEMBER_OPTIONS } from '@/shared/constants/resourceFieldValues'
 import { MutedMessage } from '@/shared/styles/common.styles'
 import { CheckboxList, Field, Label } from './DetailTeamMembers.styles'
 

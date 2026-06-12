@@ -1,16 +1,19 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { replaceResource } from '@/shared/api/resources'
 import { ROUTES } from '@/shared/constants/routes'
 import { RESOURCE_STATUS } from '@/shared/constants/resourceDomain'
-import { buildFormSeedKey } from '@/shared/utils/formSeed'
-import type { Resource, ResourcePayload } from '@/shared/types/resource'
+import type {
+  ModuleFormData,
+  Resource,
+  ResourcePayload,
+} from '@/shared/types/resource'
 import { getApiErrorMessage } from '@/shared/utils/apiError'
-import { formatResourceIdForApi } from '@/shared/utils/resourceApi'
 import { useCompletedEditBuffer } from '@/shared/hooks/useCompletedEditBuffer'
 import { useToast } from '@/shared/hooks/useToast'
+import { submitResourceModuleForm } from '../utils/submitResourceModuleForm'
+import { useModuleFormLocalState } from './useModuleFormLocalState'
 
-interface ResourceModuleFormConfig<TForm extends object> {
+interface ResourceModuleFormConfig<TForm extends ModuleFormData> {
   emptyForm: TForm
   selectForm: (resource: Resource) => TForm
   isModuleAvailable?: (effective: Resource) => boolean
@@ -24,7 +27,7 @@ interface ResourceModuleFormConfig<TForm extends object> {
   errorFallback: string
 }
 
-export function useResourceModuleForm<TForm extends object>(
+export function useResourceModuleForm<TForm extends ModuleFormData>(
   resource: Resource | null,
   config: ResourceModuleFormConfig<TForm>,
 ) {
@@ -41,29 +44,17 @@ export function useResourceModuleForm<TForm extends object>(
 
   const navigate = useNavigate()
   const { showToast } = useToast()
-  const { getResourceWithBufferedEdits, updateBufferedResource, clearBufferedResource } =
-    useCompletedEditBuffer()
+  const { clearBufferedResource } = useCompletedEditBuffer()
 
-  const resourceIdKey = resource ? formatResourceIdForApi(resource.resourceId) : ''
-  const serverSeedKey = resource ? buildFormSeedKey(resource) : ''
-  const hydrationKey = resource ? `${resourceIdKey}:${serverSeedKey}` : ''
-
-  const selectFormFromBuffer = (source: Resource) =>
-    selectForm(getResourceWithBufferedEdits(source))
-
-  const [form, setForm] = useState<TForm>(() =>
-    resource ? selectFormFromBuffer(resource) : emptyForm,
+  const { form, setForm, effectiveResource } = useModuleFormLocalState(
+    resource,
+    emptyForm,
+    selectForm,
+    buildBufferedPayload,
   )
-  const [hydratedKey, setHydratedKey] = useState(() => hydrationKey)
+
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
-
-  const effectiveResource = resource ? getResourceWithBufferedEdits(resource) : null
-
-  if (hydrationKey !== hydratedKey) {
-    setHydratedKey(hydrationKey)
-    setForm(resource ? selectFormFromBuffer(resource) : emptyForm)
-  }
 
   const isCompleted = resource?.status === RESOURCE_STATUS.COMPLETED
   const isAvailable = effectiveResource ? isModuleAvailable(effectiveResource) : false
@@ -74,13 +65,8 @@ export function useResourceModuleForm<TForm extends object>(
       return
     }
 
-    const nextForm = { ...form, [field]: value }
-    setForm(nextForm)
+    setForm({ ...form, [field]: value })
     setSubmitError(null)
-
-    if (effectiveResource) {
-      updateBufferedResource(resource, buildBufferedPayload(effectiveResource, nextForm))
-    }
   }
 
   const handleSubmit = async () => {
@@ -88,27 +74,26 @@ export function useResourceModuleForm<TForm extends object>(
       return
     }
 
-    const validationError = validateForm(form)
-    if (validationError) {
-      setSubmitError(validationError)
-      return
-    }
-
-    setSubmitError(null)
     setIsSubmitting(true)
-    const resourceIdKey = formatResourceIdForApi(resource.resourceId)
 
     try {
-      if (isCompleted) {
-        await replaceResource(
-          resourceIdKey,
-          buildBufferedPayload(effectiveResource, form),
-        )
-      } else {
-        await saveDraft(resourceIdKey, form)
-      }
-      clearBufferedResource(resourceIdKey)
+      const result = await submitResourceModuleForm(
+        resource,
+        effectiveResource,
+        form,
+        isCompleted,
+        validateForm,
+        saveDraft,
+        buildBufferedPayload,
+        clearBufferedResource,
+      )
 
+      if (result.ok === false) {
+        setSubmitError(result.validationError)
+        return
+      }
+
+      setSubmitError(null)
       showToast({
         variant: 'success',
         message: isCompleted
